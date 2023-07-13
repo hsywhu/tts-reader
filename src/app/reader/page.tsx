@@ -26,7 +26,7 @@ export default function Reader() {
     handleVoiceSelect,
     handlePlay,
     handlePause,
-    handleResetSpeech
+    handleResetSpeech,
   } = useSpeechSynthesis(content);
 
   useEffect(() => {
@@ -35,7 +35,11 @@ export default function Reader() {
 
   return (
     <Box>
-      <ReaderContent content={content} speechAnchor={speechAnchor} highlightSpeechAnchor={isPlaying} />
+      <ReaderContent
+        content={content}
+        speechAnchor={speechAnchor}
+        highlightSpeechAnchor={isPlaying}
+      />
       <Box mt="100px"></Box>
       <Box mt="20px">
         <Menu>
@@ -67,18 +71,17 @@ export default function Reader() {
             {`Speech Rate: x${speechRate}`}
           </MenuButton>
           <MenuList>
-            {
-              speechRateOptions.map((rate) => {
-                return (
-                  <MenuItem
-                    key={`speech-rate-option-${rate}`}
-                    value={rate}
-                    onClick={() => handleSetSpeechRate(rate)}
-                  >
-                    {`x${rate}`}
-                  </MenuItem>)
-              })
-            }
+            {speechRateOptions.map((rate) => {
+              return (
+                <MenuItem
+                  key={`speech-rate-option-${rate}`}
+                  value={rate}
+                  onClick={() => handleSetSpeechRate(rate)}
+                >
+                  {`x${rate}`}
+                </MenuItem>
+              );
+            })}
           </MenuList>
         </Menu>
       </Box>

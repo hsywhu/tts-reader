@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 export default function ReaderContent({
   content,
   speechAnchor,
-  highlightSpeechAnchor
+  highlightSpeechAnchor,
 }: {
   content: FormatedContent | null;
   speechAnchor: SpeechAnchor;
@@ -24,7 +24,11 @@ export default function ReaderContent({
               <Text
                 as="span"
                 key={`line-${lineIdx}-sentense-${sentenseIdx}`}
-                bgColor={isSentensePlaying && highlightSpeechAnchor ? 'orange' : 'transparent'}
+                bgColor={
+                  isSentensePlaying && highlightSpeechAnchor
+                    ? 'orange'
+                    : 'transparent'
+                }
               >
                 {sentense}
               </Text>

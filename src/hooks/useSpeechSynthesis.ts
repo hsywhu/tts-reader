@@ -1,7 +1,7 @@
-import { FormatedContent, SpeechAnchor } from "@/spec/ReaderType";
-import { supportedLanguages } from "@/util/constants";
-import { getNextSpeechAnchor } from "@/util/readerUtil";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { FormatedContent, SpeechAnchor } from '@/spec/ReaderType';
+import { supportedLanguages } from '@/util/constants';
+import { getNextSpeechAnchor } from '@/util/readerUtil';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function useSpeechSynthesis(content: FormatedContent) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -46,7 +46,7 @@ export default function useSpeechSynthesis(content: FormatedContent) {
       speechSynthesis.removeEventListener('voiceschanged', populateVoices);
       speechSynthesis.cancel();
       window.removeEventListener('beforeunload', tearDown);
-    }
+    };
 
     populateVoices();
     speechSynthesis.addEventListener('voiceschanged', populateVoices);
@@ -57,7 +57,7 @@ export default function useSpeechSynthesis(content: FormatedContent) {
     return () => {
       tearDown();
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleVoiceSelect = useCallback(
     (selectedVoice: SpeechSynthesisVoice) => {
@@ -68,35 +68,40 @@ export default function useSpeechSynthesis(content: FormatedContent) {
 
   const setSSInterval = () => {
     ssIntervalRef.current = setInterval(() => {
-        if (!speechSynthesis.speaking) {
-          clearInterval(ssIntervalRef.current);
-        } else {
-          speechSynthesis.pause();
-          speechSynthesis.resume();
-        }
-      }, 14000);
+      if (!speechSynthesis.speaking) {
+        clearInterval(ssIntervalRef.current);
+      } else {
+        speechSynthesis.pause();
+        speechSynthesis.resume();
+      }
+    }, 14000);
   };
 
   const clearSSInterval = () => {
     if (ssIntervalRef.current) clearInterval(ssIntervalRef.current);
-  }
+  };
 
   const handlePlay = () => {
     if (!isPlaying) setIsPlaying(true);
     clearSSInterval();
     if (isPaused) {
-        console.log('already paused');
-        speechSynthesis.resume();
-        setSSInterval();
-        setIsPaused(false);
-        return;
+      console.log('already paused');
+      speechSynthesis.resume();
+      setSSInterval();
+      setIsPaused(false);
+      return;
     } else if (speechSynthesis.speaking) {
       console.log('already speaking');
       speechSynthesis.cancel();
     }
-    console.log('start playing', {contentLength: content.length, speechAnchor: speechAnchorRef.current});
+    console.log('start playing', {
+      contentLength: content.length,
+      speechAnchor: speechAnchorRef.current,
+    });
     if (content) {
-      console.log(content[speechAnchorRef.current.line][speechAnchorRef.current.sentence]);
+      console.log(
+        content[speechAnchorRef.current.line][speechAnchorRef.current.sentence]
+      );
       const utter = new SpeechSynthesisUtterance(
         content[speechAnchorRef.current.line][speechAnchorRef.current.sentence]
       );
@@ -171,6 +176,6 @@ export default function useSpeechSynthesis(content: FormatedContent) {
     handleVoiceSelect,
     handlePlay,
     handlePause,
-    handleResetSpeech
-  }
+    handleResetSpeech,
+  };
 }
