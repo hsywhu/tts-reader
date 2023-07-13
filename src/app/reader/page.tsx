@@ -20,6 +20,7 @@ export default function Reader() {
     voices,
     currentVoice,
     isPlaying,
+    isPaused,
     speechAnchor,
     speechRate,
     handleSetSpeechRate,
@@ -34,16 +35,16 @@ export default function Reader() {
   }, []);
 
   return (
-    <Box>
+    <Box p="8">
       <ReaderContent
         content={content}
         speechAnchor={speechAnchor}
-        highlightSpeechAnchor={isPlaying}
+        highlightSpeechAnchor={isPlaying && !isPaused}
       />
       <Box mt="100px"></Box>
       <Box mt="20px">
         <Menu>
-          <MenuButton as={Button}>
+          <MenuButton as={Button} colorScheme="pink">
             {currentVoice?.name || 'Select an voice'}
           </MenuButton>
           <MenuList maxH="320px" overflowY="auto">
@@ -60,14 +61,18 @@ export default function Reader() {
             })}
           </MenuList>
         </Menu>
-        <Button onClick={isPlaying ? handlePause : handlePlay} ml="10px">
+        <Button
+          colorScheme="pink"
+          onClick={isPlaying ? handlePause : handlePlay}
+          ml="10px"
+        >
           {isPlaying ? 'Pause' : 'Play'}
         </Button>
-        <Button onClick={handleResetSpeech} ml="10px">
+        <Button colorScheme="pink" onClick={handleResetSpeech} ml="10px">
           Reset Speech
         </Button>
         <Menu>
-          <MenuButton as={Button} ml="10px">
+          <MenuButton as={Button} colorScheme="pink" ml="10px">
             {`Speech Rate: x${speechRate}`}
           </MenuButton>
           <MenuList>

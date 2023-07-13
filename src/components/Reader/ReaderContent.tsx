@@ -15,7 +15,8 @@ export default function ReaderContent({
     if (!content) return '';
     return content.map((line, lineIdx) => {
       return (
-        <Text key={`line-${lineIdx}`}>
+        <Text key={`line-${lineIdx}`} mt="0.8em" lineHeight="1.8">
+          <Text as="span">&emsp;&emsp;</Text>
           {line.map((sentense, sentenseIdx) => {
             const isSentensePlaying =
               lineIdx === speechAnchor.line &&
@@ -26,7 +27,7 @@ export default function ReaderContent({
                 key={`line-${lineIdx}-sentense-${sentenseIdx}`}
                 bgColor={
                   isSentensePlaying && highlightSpeechAnchor
-                    ? 'orange'
+                    ? 'orange.200'
                     : 'transparent'
                 }
               >

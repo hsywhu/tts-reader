@@ -168,6 +168,7 @@ export default function useSpeechSynthesis(content: FormatedContent) {
     currentVoice,
     setCurrentVoice,
     isPlaying,
+    isPaused,
     setIsPlaying,
     speechAnchor,
     setSpeechAnchor,
