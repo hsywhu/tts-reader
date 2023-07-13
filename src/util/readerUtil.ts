@@ -5,9 +5,18 @@ export const parseContent = (content: string): FormatedContent => {
     const lines = content.split('\n');
 
     // split each line into sentences
-    // todo: need a better way to handle cases like multiple punctuations sits together
-    const sentences = lines.map(line => line.split(/(?<=[.:;。！？])/g));
-    return sentences;
+    if (Intl?.Segmenter) {
+        // if browser support Intl.Segmenter, use it to split sentences
+        const segmenter = new Intl.Segmenter('zh', {granularity: 'sentence'});
+        const sentences = lines.map(line => {
+            const segments = Array.from(segmenter.segment(line));
+            return segments.map(segment => segment.segment);
+        });
+        return sentences;
+    } else {
+        // otherwise use regex to split sentences
+        return lines.map(line => line.split(/(?<=[.:;。！？]+)/g)); 
+    }
 }
 
 export const getNextSpeechAnchor = (content: FormatedContent, anchor: SpeechAnchor): SpeechAnchor | null => {

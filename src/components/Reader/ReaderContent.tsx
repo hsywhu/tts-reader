@@ -5,9 +5,11 @@ import { useMemo } from 'react';
 export default function ReaderContent({
   content,
   speechAnchor,
+  highlightSpeechAnchor
 }: {
   content: FormatedContent | null;
   speechAnchor: SpeechAnchor;
+  highlightSpeechAnchor: boolean;
 }) {
   const memorizedContent = useMemo(() => {
     if (!content) return '';
@@ -22,7 +24,7 @@ export default function ReaderContent({
               <Text
                 as="span"
                 key={`line-${lineIdx}-sentense-${sentenseIdx}`}
-                bgColor={isSentensePlaying ? 'orange' : 'transparent'}
+                bgColor={isSentensePlaying && highlightSpeechAnchor ? 'orange' : 'transparent'}
               >
                 {sentense}
               </Text>
@@ -31,7 +33,7 @@ export default function ReaderContent({
         </Text>
       );
     });
-  }, [content, speechAnchor]);
+  }, [content, speechAnchor, highlightSpeechAnchor]);
 
   return <div>{memorizedContent}</div>;
 }

@@ -1,144 +1,42 @@
 'use client';
 
 import ReaderContent from '@/components/Reader/ReaderContent';
-import { FormatedContent, SpeechAnchor } from '@/spec/ReaderType';
-import { getNextSpeechAnchor, parseContent } from '@/util/readerUtil';
+import useSpeechSynthesis from '@/hooks/useSpeechSynthesis';
+import { FormatedContent } from '@/spec/ReaderType';
+import { speechRateOptions } from '@/util/constants';
+import { parseContent } from '@/util/readerUtil';
 import { Button } from '@chakra-ui/button';
 import { Box } from '@chakra-ui/layout';
 import { Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/menu';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-const testContent = `三十年河东，三十年河西，莫欺少年穷！ 年仅15岁的萧家废物，于此地，立下了誓言，从今以后便一步步走向斗气大陆巅峰！
-  经历了一系列的磨练：收异火，寻宝物，炼丹药，斗魂族。
-  最终成为斗帝，为解开斗帝失踪之谜而前往大千世界....
-  `;
+const testContent = `2007年，地球基础科学出现了异常的扰动，一时间科学界风雨飘飘，人心惶惶。离奇自杀的科学家，近乎神迹的倒计时，行事隐秘的科学边界，神秘莫测的《三体》游戏……纳米科学家汪淼被警官史强带到联合作战中心，并潜入名为“科学边界”的组织协助调查。
+迷雾之中，汪淼接触到一个名为ETO的组织，发现其幕后统帅竟是自杀身亡的科学家杨冬的母亲——叶文洁。随着ETO与作战中心你来我往的不断博弈，汪淼和史强逐渐确定《三体》游戏中的世界真实存在。
+而所有事件的源起，是两个文明为了生存空间，孤注一掷的生死相逐。在联合作战中心及科学家们的共同努力下，汪淼、史强等人坚定信念、重燃希望，带领大家继续准备着在今后与即将入侵的三体人展开殊死斗争。`;
 
 export default function Reader() {
-  const [content, setContent] = useState<FormatedContent | null>(null);
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [currentVoice, setCurrentVoice] = useState<SpeechSynthesisVoice | null>(
-    null
-  );
-  const [isPlaying, setIsPlaying] = useState(false);
-  const speechAnchorRef = useRef<SpeechAnchor>({
-    line: 0,
-    sentence: 0,
-  });
-  const [speechAnchor, setSpeechAnchor] = useState<SpeechAnchor>({
-    line: 0,
-    sentence: 0,
-  });
-  const ssIntervalRef = useRef<NodeJS.Timeout>();
+  const [content, setContent] = useState<FormatedContent>([]);
+  const {
+    voices,
+    currentVoice,
+    isPlaying,
+    speechAnchor,
+    speechRate,
+    handleSetSpeechRate,
+    handleVoiceSelect,
+    handlePlay,
+    handlePause,
+    handleResetSpeech
+  } = useSpeechSynthesis(content);
 
   useEffect(() => {
     setContent(parseContent(testContent));
-
-    const populateVoices = () => {
-      // load voices
-      const voices = speechSynthesis.getVoices();
-      // only include English or Chinese voices
-      const filteredVoices = voices.filter((voice) => {
-        return voice.lang.includes('en') || voice.lang.includes('zh');
-      });
-      filteredVoices.sort((a, _) => {
-        // place Chinese voices on front
-        if (a.lang.includes('zh')) return -1;
-        else return 0;
-      });
-      setVoices(filteredVoices);
-      console.log('voices loaded', voices);
-      if (!currentVoice && filteredVoices.length > 0) {
-        setCurrentVoice(filteredVoices[0]);
-      }
-    };
-
-    populateVoices();
-    speechSynthesis.addEventListener('voiceschanged', populateVoices);
-
-    return () => {
-      speechSynthesis.removeEventListener('voiceschanged', populateVoices);
-    };
   }, []);
 
-  const handleVoiceSelect = useCallback(
-    (selectedVoice: SpeechSynthesisVoice) => {
-      setCurrentVoice(selectedVoice);
-    },
-    []
-  );
-
-  const handlePlay = () => {
-    setIsPlaying(true);
-    if (ssIntervalRef.current) clearInterval(ssIntervalRef.current);
-
-    if (speechSynthesis.speaking) {
-      console.log('already speaking');
-      speechSynthesis.cancel();
-      // return;
-    }
-
-    if (content) {
-      const utter = new SpeechSynthesisUtterance(
-        content[speechAnchorRef.current.line][speechAnchorRef.current.sentence]
-      );
-      utter.voice = currentVoice;
-      utter.rate = 1;
-      utter.pitch = 1;
-      utter.volume = 1;
-      utter.onend = () => {
-        console.log('utterance ended');
-        const nextSpeechAnchor = getNextSpeechAnchor(
-          content,
-          speechAnchorRef.current
-        );
-        if (!nextSpeechAnchor) {
-          console.log('utterance ended, no next speech anchor');
-          setIsPlaying(false);
-          return;
-        }
-        speechAnchorRef.current = nextSpeechAnchor;
-        setSpeechAnchor(nextSpeechAnchor);
-        console.log(
-          'utterance ended, move to next speech anchor',
-          nextSpeechAnchor
-        );
-        handlePlay();
-      };
-
-      ssIntervalRef.current = setInterval(() => {
-        console.log('work around', speechSynthesis.speaking);
-        if (!speechSynthesis.speaking) {
-          clearInterval(ssIntervalRef.current);
-        } else {
-          speechSynthesis.pause();
-          speechSynthesis.resume();
-        }
-      }, 14000);
-
-      speechSynthesis.speak(utter);
-    }
-  };
-
-  const handlePause = () => {
-    if (ssIntervalRef.current) clearInterval(ssIntervalRef.current);
-    speechSynthesis.pause();
-    setIsPlaying(false);
-  };
-
-  const handleResetAnchor = () => {
-    speechAnchorRef.current = {
-      line: 0,
-      sentence: 0,
-    };
-    setSpeechAnchor({
-      line: 0,
-      sentence: 0,
-    });
-  };
-
   return (
-    <div>
-      <ReaderContent content={content} speechAnchor={speechAnchor} />
+    <Box>
+      <ReaderContent content={content} speechAnchor={speechAnchor} highlightSpeechAnchor={isPlaying} />
+      <Box mt="100px"></Box>
       <Box mt="20px">
         <Menu>
           <MenuButton as={Button}>
@@ -161,10 +59,29 @@ export default function Reader() {
         <Button onClick={isPlaying ? handlePause : handlePlay} ml="10px">
           {isPlaying ? 'Pause' : 'Play'}
         </Button>
-        <Button onClick={handleResetAnchor} ml="10px">
+        <Button onClick={handleResetSpeech} ml="10px">
           Reset Speech
         </Button>
+        <Menu>
+          <MenuButton as={Button} ml="10px">
+            {`Speech Rate: x${speechRate}`}
+          </MenuButton>
+          <MenuList>
+            {
+              speechRateOptions.map((rate) => {
+                return (
+                  <MenuItem
+                    key={`speech-rate-option-${rate}`}
+                    value={rate}
+                    onClick={() => handleSetSpeechRate(rate)}
+                  >
+                    {`x${rate}`}
+                  </MenuItem>)
+              })
+            }
+          </MenuList>
+        </Menu>
       </Box>
-    </div>
+    </Box>
   );
 }
