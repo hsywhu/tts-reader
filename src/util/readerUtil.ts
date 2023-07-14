@@ -23,13 +23,16 @@ export const getNextSpeechAnchor = (
   content: FormatedContent,
   anchor: SpeechAnchor
 ): SpeechAnchor | null => {
-  const { line, sentence } = anchor;
-  if (line >= content.length) return null;
-  if (sentence >= content[line].length - 1) {
-    const newLine = line + 1;
-    if (newLine >= content.length) return null;
-    return { line: newLine, sentence: 0 };
-  } else {
-    return { line, sentence: sentence + 1 };
+  let { line: newLine, sentence: newSentence } = anchor;
+  newSentence++;
+  while (newLine < content.length) {
+    while (newSentence < content[newLine].length) {
+      if (content[newLine][newSentence].length > 0)
+        return { line: newLine, sentence: newSentence };
+      newSentence++;
+    }
+    newLine++;
+    newSentence = 0;
   }
+  return null;
 };

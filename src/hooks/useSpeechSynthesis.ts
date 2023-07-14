@@ -139,7 +139,6 @@ export default function useSpeechSynthesis(content: FormatedContent) {
   const handlePause = () => {
     if (ssIntervalRef.current) clearInterval(ssIntervalRef.current);
     speechSynthesis.pause();
-    setIsPlaying(false);
     setIsPaused(true);
   };
 
