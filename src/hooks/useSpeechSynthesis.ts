@@ -23,14 +23,28 @@ export default function useSpeechSynthesis(content: FormatedContent) {
 
   const ssIntervalRef = useRef<NodeJS.Timeout>();
 
+  // fix the issue that utterance end event might not be triggered because of GC
+  // https://stackoverflow.com/a/35935851
+  const uttersRef = useRef<SpeechSynthesisUtterance[]>([]);
+
   useEffect(() => {
     const populateVoices = () => {
       // load voices
       const voices = speechSynthesis.getVoices();
-      // only include English or Chinese voices
-      const filteredVoices = voices.filter((voice) => {
-        return supportedLanguages.includes(voice.lang);
-      });
+
+      const filteredVoices: SpeechSynthesisVoice[] = [];
+
+      const voiceNameSet = new Set<string>();
+      for (const voice of voices) {
+        if (
+          supportedLanguages.includes(voice.lang) &&
+          !voiceNameSet.has(voice.name)
+        ) {
+          filteredVoices.push(voice);
+          voiceNameSet.add(voice.name);
+        }
+      }
+
       filteredVoices.sort((a, _) => {
         // place Chinese voices on front
         if (a.lang.includes('zh')) return -1;
@@ -105,11 +119,14 @@ export default function useSpeechSynthesis(content: FormatedContent) {
       const utter = new SpeechSynthesisUtterance(
         content[speechAnchorRef.current.line][speechAnchorRef.current.sentence]
       );
+      uttersRef.current = [utter];
+      // @ts-ignore
+      console.log('all utterances', uttersRef.current.length);
       utter.voice = currentVoice;
       utter.rate = speechRateRef.current;
       utter.pitch = 1;
       utter.volume = 1;
-      utter.onend = () => {
+      utter.addEventListener('end', () => {
         console.log('utterance ended');
         const nextSpeechAnchor = getNextSpeechAnchor(
           content,
@@ -127,7 +144,7 @@ export default function useSpeechSynthesis(content: FormatedContent) {
           nextSpeechAnchor
         );
         handlePlay();
-      };
+      });
 
       setSSInterval();
 
