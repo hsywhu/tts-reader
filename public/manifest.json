@@ -1,6 +1,7 @@
 {
   "name": "Text-to-Speech Reader",
   "short_name": "TTS Reader",
+  "description": "A simple reader that reads text aloud.",
   "icons": [
     {
       "src": "/icons/android-chrome-192x192.png",
@@ -22,6 +23,8 @@
   "theme_color": "#FFFFFF",
   "background_color": "#FFFFFF",
   "start_url": "/",
-  "display": "standalone",
-  "orientation": "portrait"
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "id": "/",
+  "scope": "/"
 }
