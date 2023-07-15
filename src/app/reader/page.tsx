@@ -39,6 +39,7 @@ export default function Reader() {
     handleVoiceSelect,
     handlePlay,
     handlePause,
+    handleResume,
     handleResetSpeech,
   } = useSpeechSynthesis(content);
 
@@ -75,9 +76,11 @@ export default function Reader() {
         </Menu>
         <Button
           colorScheme="pink"
-          onClick={isPaused || !isPlaying ? handlePlay : handlePause}
+          onClick={
+            isPaused ? handleResume : isPlaying ? handlePause : handlePlay
+          }
         >
-          {isPaused || !isPlaying ? 'Play' : 'Pause'}
+          {isPaused ? 'Resume' : isPlaying ? 'Pause' : 'Play'}
         </Button>
         <Button colorScheme="pink" onClick={handleResetSpeech}>
           Reset Speech

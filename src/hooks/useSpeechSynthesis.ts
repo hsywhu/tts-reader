@@ -8,6 +8,7 @@ export default function useSpeechSynthesis(content: FormatedContent) {
   const [currentVoice, setCurrentVoice] = useState<SpeechSynthesisVoice | null>(
     null
   );
+  const currentVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const speechAnchorRef = useRef<SpeechAnchor>({
@@ -18,8 +19,8 @@ export default function useSpeechSynthesis(content: FormatedContent) {
     line: 0,
     sentence: 0,
   });
-  const [speechRate, setSpeechRate] = useState<number>(1);
-  const speechRateRef = useRef<number>(1);
+  const [speechRate, setSpeechRate] = useState<number>(1.3);
+  const speechRateRef = useRef<number>(1.3);
 
   const ssIntervalRef = useRef<NodeJS.Timeout>();
 
@@ -53,6 +54,7 @@ export default function useSpeechSynthesis(content: FormatedContent) {
       setVoices(filteredVoices);
       if (!currentVoice && filteredVoices.length > 0) {
         setCurrentVoice(filteredVoices[0]);
+        currentVoiceRef.current = filteredVoices[0];
       }
     };
 
@@ -73,13 +75,6 @@ export default function useSpeechSynthesis(content: FormatedContent) {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleVoiceSelect = useCallback(
-    (selectedVoice: SpeechSynthesisVoice) => {
-      setCurrentVoice(selectedVoice);
-    },
-    []
-  );
-
   const setSSInterval = () => {
     ssIntervalRef.current = setInterval(() => {
       if (!speechSynthesis.speaking) {
@@ -95,15 +90,11 @@ export default function useSpeechSynthesis(content: FormatedContent) {
     if (ssIntervalRef.current) clearInterval(ssIntervalRef.current);
   };
 
-  const handlePlay = () => {
+  function handlePlay() {
     if (!isPlaying) setIsPlaying(true);
     clearSSInterval();
     if (isPaused) {
-      console.log('already paused');
-      speechSynthesis.resume();
-      setSSInterval();
       setIsPaused(false);
-      return;
     } else if (speechSynthesis.speaking) {
       console.log('already speaking');
       speechSynthesis.cancel();
@@ -120,14 +111,12 @@ export default function useSpeechSynthesis(content: FormatedContent) {
         content[speechAnchorRef.current.line][speechAnchorRef.current.sentence]
       );
       uttersRef.current = [utter];
-      // @ts-ignore
-      console.log('all utterances', uttersRef.current.length);
-      utter.voice = currentVoice;
+      utter.voice = currentVoiceRef.current;
       utter.rate = speechRateRef.current;
       utter.pitch = 1;
       utter.volume = 1;
-      utter.addEventListener('end', () => {
-        console.log('utterance ended');
+      utter.onend = () => {
+        console.log('handle next play');
         const nextSpeechAnchor = getNextSpeechAnchor(
           content,
           speechAnchorRef.current
@@ -144,19 +133,30 @@ export default function useSpeechSynthesis(content: FormatedContent) {
           nextSpeechAnchor
         );
         handlePlay();
-      });
+      };
 
       setSSInterval();
 
       speechSynthesis.speak(utter);
       console.log('utterance started');
     }
-  };
+  }
 
   const handlePause = () => {
     if (ssIntervalRef.current) clearInterval(ssIntervalRef.current);
     speechSynthesis.pause();
     setIsPaused(true);
+  };
+
+  const handleResume = () => {
+    console.log('handle resume');
+    if (speechSynthesis.speaking) {
+      speechSynthesis.resume();
+      setSSInterval();
+      setIsPaused(false);
+    } else {
+      handlePlay();
+    }
   };
 
   const handleResetSpeech = () => {
@@ -173,26 +173,43 @@ export default function useSpeechSynthesis(content: FormatedContent) {
     });
   };
 
-  const handleSetSpeechRate = (rate: number) => {
-    speechRateRef.current = rate;
-    setSpeechRate(rate);
-  };
+  const handleVoiceSelect = useCallback(
+    (selectedVoice: SpeechSynthesisVoice) => {
+      console.log('handle voice select', { isPlaying, isPaused });
+      setCurrentVoice(selectedVoice);
+      currentVoiceRef.current = selectedVoice;
+      speechSynthesis.cancel();
+      if (isPlaying && !isPaused) {
+        handlePlay();
+      }
+    },
+    [isPlaying, isPaused] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const handleSetSpeechRate = useCallback(
+    (rate: number) => {
+      setSpeechRate(rate);
+      speechRateRef.current = rate;
+      speechSynthesis.cancel();
+      if (isPlaying && !isPaused) {
+        handlePlay();
+      }
+    },
+    [isPlaying, isPaused] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   return {
     voices,
-    setVoices,
     currentVoice,
-    setCurrentVoice,
     isPlaying,
     isPaused,
-    setIsPlaying,
     speechAnchor,
-    setSpeechAnchor,
     speechRate,
     handleSetSpeechRate,
     handleVoiceSelect,
     handlePlay,
     handlePause,
+    handleResume,
     handleResetSpeech,
   };
 }
