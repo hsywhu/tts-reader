@@ -5,8 +5,9 @@ const withPWAInit = require("next-pwa");
 const withPWA = withPWAInit({
   dest: 'public',
   // Solution: https://github.com/shadowwalker/next-pwa/issues/424#issuecomment-1399683017
-  buildExcludes: ["app-build-manifest.json"],
-})
+  buildExcludes: ['app-build-manifest.json'],
+  disable: process.env.NODE_ENV === 'development',
+});
 
 const generateAppDirEntry = (entry) => {
   const packagePath = require.resolve('next-pwa');
@@ -35,6 +36,6 @@ const nextConfig = {
 
     return config;
   },
-}
+};
 
-module.exports = withPWA(nextConfig)
+module.exports = withPWA(nextConfig);

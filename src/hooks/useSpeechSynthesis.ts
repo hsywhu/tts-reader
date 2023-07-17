@@ -1,9 +1,26 @@
 import { FormatedContent, SpeechAnchor } from '@/spec/ReaderType';
-import { supportedLanguages } from '@/util/constants';
-import { getNextSpeechAnchor } from '@/util/readerUtil';
+import { getNextSpeechAnchor, getPrevSpeechAnchor } from '@/util/readerUtil';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-export default function useSpeechSynthesis(content: FormatedContent) {
+export interface UseSpeechSynthesis {
+  voices: SpeechSynthesisVoice[];
+  currentVoice: SpeechSynthesisVoice | null;
+  isPlaying: boolean;
+  isPaused: boolean;
+  speechAnchor: { line: number; sentence: number };
+  speechRate: number;
+  handleSetSpeechRate: (rate: number) => void;
+  handleVoiceSelect: (voice: SpeechSynthesisVoice) => void;
+  handlePlay: () => void;
+  handlePause: () => void;
+  handleResume: () => void;
+  handleResetSpeech: () => void;
+  moveAnchor: ({ isPrev }: { isPrev?: boolean }) => void;
+}
+
+export default function useSpeechSynthesis(
+  content: FormatedContent
+): UseSpeechSynthesis {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [currentVoice, setCurrentVoice] = useState<SpeechSynthesisVoice | null>(
     null
@@ -19,8 +36,8 @@ export default function useSpeechSynthesis(content: FormatedContent) {
     line: 0,
     sentence: 0,
   });
-  const [speechRate, setSpeechRate] = useState<number>(1.3);
-  const speechRateRef = useRef<number>(1.3);
+  const [speechRate, setSpeechRate] = useState<number>(1);
+  const speechRateRef = useRef<number>(1);
 
   const ssIntervalRef = useRef<NodeJS.Timeout>();
 
@@ -37,24 +54,18 @@ export default function useSpeechSynthesis(content: FormatedContent) {
 
       const voiceNameSet = new Set<string>();
       for (const voice of voices) {
-        if (
-          supportedLanguages.includes(voice.lang) &&
-          !voiceNameSet.has(voice.name)
-        ) {
+        if (!voiceNameSet.has(voice.name)) {
           filteredVoices.push(voice);
           voiceNameSet.add(voice.name);
         }
       }
 
-      filteredVoices.sort((a, _) => {
-        // place Chinese voices on front
-        if (a.lang.includes('zh')) return -1;
-        else return 0;
-      });
       setVoices(filteredVoices);
       if (!currentVoice && filteredVoices.length > 0) {
-        setCurrentVoice(filteredVoices[0]);
-        currentVoiceRef.current = filteredVoices[0];
+        let defaultVoice = filteredVoices.find((v) => v.default);
+        if (!defaultVoice) defaultVoice = filteredVoices[0];
+        setCurrentVoice(defaultVoice);
+        currentVoiceRef.current = defaultVoice;
       }
     };
 
@@ -96,17 +107,9 @@ export default function useSpeechSynthesis(content: FormatedContent) {
     if (isPaused) {
       setIsPaused(false);
     } else if (speechSynthesis.speaking) {
-      console.log('already speaking');
       speechSynthesis.cancel();
     }
-    console.log('start playing', {
-      contentLength: content.length,
-      speechAnchor: speechAnchorRef.current,
-    });
     if (content) {
-      console.log(
-        content[speechAnchorRef.current.line][speechAnchorRef.current.sentence]
-      );
       const utter = new SpeechSynthesisUtterance(
         content[speechAnchorRef.current.line][speechAnchorRef.current.sentence]
       );
@@ -116,29 +119,22 @@ export default function useSpeechSynthesis(content: FormatedContent) {
       utter.pitch = 1;
       utter.volume = 1;
       utter.onend = () => {
-        console.log('handle next play');
         const nextSpeechAnchor = getNextSpeechAnchor(
           content,
           speechAnchorRef.current
         );
         if (!nextSpeechAnchor) {
-          console.log('utterance ended, no next speech anchor');
           setIsPlaying(false);
           return;
         }
         speechAnchorRef.current = nextSpeechAnchor;
         setSpeechAnchor(nextSpeechAnchor);
-        console.log(
-          'utterance ended, move to next speech anchor',
-          nextSpeechAnchor
-        );
         handlePlay();
       };
 
       setSSInterval();
 
       speechSynthesis.speak(utter);
-      console.log('utterance started');
     }
   }
 
@@ -149,7 +145,6 @@ export default function useSpeechSynthesis(content: FormatedContent) {
   };
 
   const handleResume = () => {
-    console.log('handle resume');
     if (speechSynthesis.speaking) {
       speechSynthesis.resume();
       setSSInterval();
@@ -175,7 +170,6 @@ export default function useSpeechSynthesis(content: FormatedContent) {
 
   const handleVoiceSelect = useCallback(
     (selectedVoice: SpeechSynthesisVoice) => {
-      console.log('handle voice select', { isPlaying, isPaused });
       setCurrentVoice(selectedVoice);
       currentVoiceRef.current = selectedVoice;
       speechSynthesis.cancel();
@@ -198,6 +192,18 @@ export default function useSpeechSynthesis(content: FormatedContent) {
     [isPlaying, isPaused] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+  const moveAnchor = ({ isPrev }: { isPrev?: boolean }) => {
+    speechSynthesis.cancel();
+    const nextSpeechAnchor = isPrev
+      ? getPrevSpeechAnchor(content, speechAnchorRef.current)
+      : getNextSpeechAnchor(content, speechAnchorRef.current);
+    if (nextSpeechAnchor) {
+      speechAnchorRef.current = nextSpeechAnchor;
+      setSpeechAnchor(nextSpeechAnchor);
+    }
+    if (isPlaying && !isPaused) handlePlay();
+  };
+
   return {
     voices,
     currentVoice,
@@ -211,5 +217,6 @@ export default function useSpeechSynthesis(content: FormatedContent) {
     handlePause,
     handleResume,
     handleResetSpeech,
+    moveAnchor,
   };
 }
