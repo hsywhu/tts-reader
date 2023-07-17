@@ -36,3 +36,22 @@ export const getNextSpeechAnchor = (
   }
   return null;
 };
+
+export const getPrevSpeechAnchor = (
+  content: FormatedContent,
+  anchor: SpeechAnchor
+): SpeechAnchor | null => {
+  let { line: newLine, sentence: newSentence } = anchor;
+  newSentence--;
+  while (newLine >= 0) {
+    while (newSentence >= 0) {
+      if (content[newLine][newSentence].length > 0)
+        return { line: newLine, sentence: newSentence };
+      newSentence--;
+    }
+    newLine--;
+    if (newLine < 0) return null;
+    newSentence = content[newLine].length - 1;
+  }
+  return null;
+};

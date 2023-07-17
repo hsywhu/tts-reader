@@ -1,8 +1,26 @@
 import { FormatedContent, SpeechAnchor } from '@/spec/ReaderType';
-import { getNextSpeechAnchor } from '@/util/readerUtil';
+import { getNextSpeechAnchor, getPrevSpeechAnchor } from '@/util/readerUtil';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-export default function useSpeechSynthesis(content: FormatedContent) {
+export interface UseSpeechSynthesis {
+  voices: SpeechSynthesisVoice[];
+  currentVoice: SpeechSynthesisVoice | null;
+  isPlaying: boolean;
+  isPaused: boolean;
+  speechAnchor: { line: number; sentence: number };
+  speechRate: number;
+  handleSetSpeechRate: (rate: number) => void;
+  handleVoiceSelect: (voice: SpeechSynthesisVoice) => void;
+  handlePlay: () => void;
+  handlePause: () => void;
+  handleResume: () => void;
+  handleResetSpeech: () => void;
+  moveAnchor: ({ isPrev }: { isPrev?: boolean }) => void;
+}
+
+export default function useSpeechSynthesis(
+  content: FormatedContent
+): UseSpeechSynthesis {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [currentVoice, setCurrentVoice] = useState<SpeechSynthesisVoice | null>(
     null
@@ -174,6 +192,18 @@ export default function useSpeechSynthesis(content: FormatedContent) {
     [isPlaying, isPaused] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+  const moveAnchor = ({ isPrev }: { isPrev?: boolean }) => {
+    speechSynthesis.cancel();
+    const nextSpeechAnchor = isPrev
+      ? getPrevSpeechAnchor(content, speechAnchorRef.current)
+      : getNextSpeechAnchor(content, speechAnchorRef.current);
+    if (nextSpeechAnchor) {
+      speechAnchorRef.current = nextSpeechAnchor;
+      setSpeechAnchor(nextSpeechAnchor);
+    }
+    if (isPlaying && !isPaused) handlePlay();
+  };
+
   return {
     voices,
     currentVoice,
@@ -187,5 +217,6 @@ export default function useSpeechSynthesis(content: FormatedContent) {
     handlePause,
     handleResume,
     handleResetSpeech,
+    moveAnchor,
   };
 }
