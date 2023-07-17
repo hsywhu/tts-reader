@@ -1,7 +1,7 @@
 import { UseSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
 import { speechRateOptions } from '@/util/constants';
 import { Button } from '@chakra-ui/button';
-import { Box, Stack, Container, Flex, HStack, Center } from '@chakra-ui/layout';
+import { Box, Stack, HStack, Center } from '@chakra-ui/layout';
 import { Icon, IconButton } from '@chakra-ui/react';
 import { Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/menu';
 import {
@@ -60,6 +60,7 @@ export default function SpeechController({
             icon={<Icon as={FaChevronRight} />}
           />
           <IconButton
+            isDisabled={!isPlaying}
             colorScheme="pink"
             onClick={handleResetSpeech}
             aria-label="Reset Speech"

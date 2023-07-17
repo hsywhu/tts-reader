@@ -26,20 +26,7 @@ export default function Reader() {
   const [inputContent, setInputContent] = useState<string>('');
   const speechSynthesisControl = useSpeechSynthesis(content);
 
-  const {
-    voices,
-    currentVoice,
-    isPlaying,
-    isPaused,
-    speechAnchor,
-    speechRate,
-    handleSetSpeechRate,
-    handleVoiceSelect,
-    handlePlay,
-    handlePause,
-    handleResume,
-    handleResetSpeech,
-  } = speechSynthesisControl;
+  const { isPlaying, speechAnchor, handleResetSpeech } = speechSynthesisControl;
 
   useEffect(() => {
     setContent(parseContent(testEnglishContent));
