@@ -1,5 +1,5 @@
 # TTS Reader
-This is a simple POV to explore the capability of client side SpeechSynthesis API under the mobile PWA environment
+This is a simple POC to explore the capability of client side SpeechSynthesis API under the mobile PWA environment
 
 ## Getting Started
 
