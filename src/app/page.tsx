@@ -6,8 +6,8 @@ import useSpeechSynthesis from '@/hooks/useSpeechSynthesis';
 import { FormatedContent } from '@/spec/ReaderType';
 import { parseContent } from '@/util/readerUtil';
 import { Button } from '@chakra-ui/button';
-import { Box, Container, Flex, VStack } from '@chakra-ui/layout';
-import { Textarea } from '@chakra-ui/react';
+import { Box, Container, Flex, VStack, Center } from '@chakra-ui/layout';
+import { Textarea, Heading } from '@chakra-ui/react';
 import { useCallback, useEffect, useState } from 'react';
 
 const testContent = `“斗之力，三段！”
@@ -45,6 +45,11 @@ export default function Reader() {
 
   return (
     <Container maxW="container.md">
+      <Center>
+        <Heading size="md" mt="20px" color="gray.700">
+          A simple reader that reads text aloud
+        </Heading>
+      </Center>
       <ReaderContent
         content={content}
         speechAnchor={speechAnchor}

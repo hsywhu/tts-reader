@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'TTS Reader',
-  description: 'A simple reader that reads text aloud.',
+  description: 'A simple reader that reads text aloud',
   manifest: '/manifest.json',
   viewport: 'width=device-width, initial-scale=1',
   icons: ['/favicon.ico'],
